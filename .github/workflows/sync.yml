@@ -1,0 +1,38 @@
+name: Sync Claude Code Releases
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for new version
+        id: check
+        run: |
+          remote=$(curl -fsSL "https://downloads.claude.ai/claude-code-releases/latest" | tr -d '[:space:]')
+          echo "remote_version=$remote" >> "$GITHUB_OUTPUT"
+          if gh release view "v${remote}" >/dev/null 2>&1; then
+            echo "needs_sync=false" >> "$GITHUB_OUTPUT"
+            echo "Version $remote already synced."
+          else
+            echo "needs_sync=true" >> "$GITHUB_OUTPUT"
+            echo "New version detected: $remote"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run sync
+        if: steps.check.outputs.needs_sync == 'true'
+        run: |
+          chmod +x sync.sh
+          bash sync.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
