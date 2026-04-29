@@ -178,7 +178,7 @@ fi
 chmod +x "$binary_path"
 
 echo "Setting up Claude Code..."
-"$binary_path" install ${TARGET:+"$TARGET"}
+"$binary_path" install --force ${TARGET:+"$TARGET"}
 
 rm -f "$binary_path"
 
