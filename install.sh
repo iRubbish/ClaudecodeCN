@@ -178,10 +178,32 @@ fi
 chmod +x "$binary_path"
 
 echo "Setting up Claude Code..."
-"$binary_path" install --force ${TARGET:+"$TARGET"}
+INSTALL_DIR="$HOME/.local/share/droid/versions"
+BIN_DIR="$HOME/.local/bin"
+mkdir -p "$INSTALL_DIR" "$BIN_DIR"
+
+cp "$binary_path" "$INSTALL_DIR/$version"
+chmod +x "$INSTALL_DIR/$version"
+ln -sf "$INSTALL_DIR/$version" "$BIN_DIR/claude"
+
+# Add to PATH if not already present
+SHELL_RC=""
+if [ -n "$ZSH_VERSION" ] || [ "$(basename "$SHELL")" = "zsh" ]; then
+    SHELL_RC="$HOME/.zshrc"
+elif [ -n "$BASH_VERSION" ] || [ "$(basename "$SHELL")" = "bash" ]; then
+    SHELL_RC="$HOME/.bashrc"
+fi
+
+if [ -n "$SHELL_RC" ] && ! grep -q '\.local/bin' "$SHELL_RC" 2>/dev/null; then
+    echo 'export PATH=$HOME/.local/bin:$PATH' >> "$SHELL_RC"
+fi
 
 rm -f "$binary_path"
 
 echo ""
 echo "Installation complete!"
+echo "  Version: $version"
+echo "  Location: $BIN_DIR/claude"
+echo ""
+echo "Restart your shell or run: source $SHELL_RC"
 echo ""
