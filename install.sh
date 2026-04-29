@@ -127,14 +127,18 @@ mkdir -p "$DOWNLOAD_DIR"
 # ============================================================
 # Resolve version
 # ============================================================
-version=$(download_file "$(get_raw_url latest_version)")
-version=$(echo "$version" | tr -d '[:space:]')
-
-if [ -z "$version" ]; then
-    echo "Failed to fetch latest version" >&2
-    exit 1
+if [ -n "$TARGET" ] && [ "$TARGET" != "latest" ] && [ "$TARGET" != "stable" ]; then
+    version="$TARGET"
+    echo "Requested version: $version"
+else
+    version=$(download_file "$(get_raw_url latest_version)")
+    version=$(echo "$version" | tr -d '[:space:]')
+    if [ -z "$version" ]; then
+        echo "Failed to fetch latest version" >&2
+        exit 1
+    fi
+    echo "Latest version: $version"
 fi
-echo "Latest version: $version"
 
 # ============================================================
 # Download manifest and verify checksum
