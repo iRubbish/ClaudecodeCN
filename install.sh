@@ -44,13 +44,13 @@ download_file() {
     local output="$2"
     if [ "$DOWNLOADER" = "curl" ]; then
         if [ -n "$output" ]; then
-            curl -fsSL --connect-timeout 10 -o "$output" "$url"
+            curl -fSL --connect-timeout 10 --progress-bar -o "$output" "$url"
         else
             curl -fsSL --connect-timeout 10 "$url"
         fi
     else
         if [ -n "$output" ]; then
-            wget -q --timeout=10 -O "$output" "$url"
+            wget --timeout=10 --show-progress -O "$output" "$url" 2>&1
         else
             wget -q --timeout=10 -O - "$url"
         fi
