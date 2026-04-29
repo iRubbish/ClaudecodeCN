@@ -178,7 +178,7 @@ fi
 chmod +x "$binary_path"
 
 echo "Setting up Claude Code..."
-INSTALL_DIR="$HOME/.local/share/droid/versions"
+INSTALL_DIR="$HOME/.local/share/claude/versions"
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$INSTALL_DIR" "$BIN_DIR"
 
@@ -186,24 +186,53 @@ cp "$binary_path" "$INSTALL_DIR/$version"
 chmod +x "$INSTALL_DIR/$version"
 ln -sf "$INSTALL_DIR/$version" "$BIN_DIR/claude"
 
+# ============================================================
 # Add to PATH if not already present
+# ============================================================
+user_shell="$(basename "${SHELL:-/bin/sh}")"
 SHELL_RC=""
-if [ -n "$ZSH_VERSION" ] || [ "$(basename "$SHELL")" = "zsh" ]; then
-    SHELL_RC="$HOME/.zshrc"
-elif [ -n "$BASH_VERSION" ] || [ "$(basename "$SHELL")" = "bash" ]; then
-    SHELL_RC="$HOME/.bashrc"
+
+case "$user_shell" in
+    zsh)  SHELL_RC="$HOME/.zshrc" ;;
+    bash)
+        if [ "$os" = "darwin" ]; then
+            SHELL_RC="$HOME/.bash_profile"
+        else
+            SHELL_RC="$HOME/.bashrc"
+        fi
+        ;;
+    fish) SHELL_RC="$HOME/.config/fish/config.fish" ;;
+esac
+
+# Only write to rc file if .local/bin is not already configured there
+PATH_WRITTEN=false
+if [ -n "$SHELL_RC" ] && ! grep -qF '.local/bin' "$SHELL_RC" 2>/dev/null; then
+    if [ "$user_shell" = "fish" ]; then
+        mkdir -p "$(dirname "$SHELL_RC")"
+        echo 'fish_add_path $HOME/.local/bin' >> "$SHELL_RC"
+    else
+        echo 'export PATH=$HOME/.local/bin:$PATH' >> "$SHELL_RC"
+    fi
+    PATH_WRITTEN=true
 fi
 
-if [ -n "$SHELL_RC" ] && ! grep -q '\.local/bin' "$SHELL_RC" 2>/dev/null; then
-    echo 'export PATH=$HOME/.local/bin:$PATH' >> "$SHELL_RC"
-fi
+# Make claude available in the current process immediately
+case ":$PATH:" in
+    *":$BIN_DIR:"*) ;;
+    *) export PATH="$BIN_DIR:$PATH" ;;
+esac
 
 rm -f "$binary_path"
 
 echo ""
 echo "Installation complete!"
-echo "  Version: $version"
+echo "  Version:  $version"
 echo "  Location: $BIN_DIR/claude"
+if [ "$PATH_WRITTEN" = true ]; then
+    echo "  PATH:     added to $SHELL_RC"
+fi
+if claude --version >/dev/null 2>&1; then
+    echo "  Verify:   $(claude --version)"
+fi
 echo ""
-echo "Restart your shell or run: source $SHELL_RC"
-echo ""
+echo "Run 'claude' to get started."
