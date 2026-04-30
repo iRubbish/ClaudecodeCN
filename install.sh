@@ -239,4 +239,9 @@ if claude --version >/dev/null 2>&1; then
     echo "  Verify:   $(claude --version)"
 fi
 echo ""
-echo "Run 'claude' to get started."
+if [ -n "$SHELL_RC" ]; then
+    printf "\033[1;33m%s\033[0m\n" ">>> Run this command to activate claude / 运行以下命令以激活 claude <<<"
+    echo ""
+    printf "  \033[1;32msource %s && claude\033[0m\n" "$SHELL_RC"
+    echo ""
+fi
